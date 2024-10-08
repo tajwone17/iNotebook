@@ -1,41 +1,42 @@
 const express = require('express');
-const User = require('../models/User');
+const User = require('../models/User'); 
 const router = express.Router(); 
-const { body, validationResult } = require('express-validator');
+const { body, validationResult } = require('express-validator'); 
+const bcrypt = require('bcryptjs'); 
+const jwt = require('jsonwebtoken'); 
 
-// Create a User using: POST "/api/auth/createuser". No login required
+const JWT_secret = 'tajwoneisagoodb$oy'; 
+
+// Create a User: POST "/api/auth/createuser"
 router.post('/createuser',
-  // Validations for request body
   [
-    body('name', 'Enter a valid name').isLength({ min: 3 }), // Name must be at least 3 characters
-    body('email', 'Enter a valid email').isEmail(),          // Email must be valid
-    body('password', 'Password must be at least 5 characters').isLength({ min: 5 }), // Password must be at least 5 characters
+    body('name', 'Enter a valid name').isLength({ min: 3 }),
+    body('email', 'Enter a valid email').isEmail(),
+    body('password', 'Password must be at least 5 characters').isLength({ min: 5 }),
   ],
-  // Asynchronous route handler
   async (req, res) => {
-    // Validate the request body for errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      // If there are errors, respond with a 400 status and the errors
       return res.status(400).json({ errors: errors.array() });
     }
     
     try {
-      // Attempt to create a new user in the database
-      const user = await User.create({
+      const salt = await bcrypt.genSalt(10); // Generate salt
+      const secPass = await bcrypt.hash(req.body.password, salt); // Hash password
+      
+      const user = await User.create({ // Create user
         name: req.body.name,
-        password: req.body.password,
+        password: secPass,
         email: req.body.email,
       });
-      // Respond with the created user object
-      res.json(user);
+      
+      const authToken = jwt.sign({ user: { id: user.id } }, JWT_secret); // Generate JWT
+      res.json({ authToken }); // Send token
     } catch (err) {
-      // Log any errors to the console
       console.error(err);
-      // Respond with a 500 status and the error message
-      res.status(500).json({ message: err.message });
+      res.status(500).json({ message: err.message }); // Handle errors
     }
   }
 );
 
-module.exports = router; // Export the router for use in other parts of the application
+module.exports = router;
