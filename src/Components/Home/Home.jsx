@@ -1,6 +1,8 @@
 import React from "react";
+import Notes from "../Notes/Notes"
 
 const Home = () => {
+
   return (
     <div>
       <div className="container my-3">
@@ -25,7 +27,7 @@ const Home = () => {
               Password
             </label>
             <input
-              type="password"
+              type="current-password"
               className="form-control"
               id="exampleInputPassword1"
             />
@@ -46,9 +48,7 @@ const Home = () => {
         </form>
       
       </div>
-      <div className="container my-3">
-            <h2>Your Notes</h2>
-        </div>
+  <Notes/>
     </div>
   );
 };
